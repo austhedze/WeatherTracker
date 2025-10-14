@@ -17,7 +17,7 @@ It offers a smooth user experience, simple authentication, and beautiful visuals
 
 | Welcome | Authentication | Home | Location | Favorites |
 |----------|----------------|------|-----------|------------|
-| <img src="screenshots/welcome.jpeg" width="230"> | <img src="screenshots/auth.jpeg" width="230"> | <img src="screenshots/home.jpeg" width="230"> | <img src="screenshots/location.jpeg" width="230"> | <img src="screenshots/favorite.jpeg" width="230"> |
+| <img src="https://github.com/austhedze/WeatherTracker/blob/master/screenshots/welcom.jpeg?raw=true" width="230"> | <img src="https://github.com/austhedze/WeatherTracker/blob/master/screenshots/auth.jpeg?raw=true" width="230"> | <img src="https://github.com/austhedze/WeatherTracker/blob/master/screenshots/home.jpeg?raw=true" width="230"> | <img src="https://github.com/austhedze/WeatherTracker/blob/master/screenshots/location.jpeg?raw=true" width="230"> | <img src="https://github.com/austhedze/WeatherTracker/blob/master/screenshots/favorite.jpeg?raw=true" width="230"> |
 
 
 ---
