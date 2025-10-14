@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "667708005091",
+    "project_id": "exam-2de73",
+    "storage_bucket": "exam-2de73.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:667708005091:android:175a12f767aec4a4b6c3d6",
+        "android_client_info": {
+          "package_name": "com.example.xam_ap"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAo3OMPiXjUTpV9MbWJOUvy_OxWB3EbAk8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
