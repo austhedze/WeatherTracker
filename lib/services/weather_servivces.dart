@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/weather_models.dart';
 
+// Service to fetch weather data from OpenWeatherMap API
 class WeatherService {
   static const String apiKey = '9ce2336ea646f55d61cbb029a0e27694';
   static const String baseUrl = 'https://api.openweathermap.org/data/2.5';
@@ -18,23 +19,26 @@ class WeatherService {
     }
   }
 
-  Future<List<ForecastDay>> getSevenDayForecast(double lat, double lon) async {
-    // Note: One Call API 3.0 requires lat/lon. We'll use the coordinates from current weather
-    final response = await http.get(
-      Uri.parse('$baseUrl/forecast?q=London&appid=$apiKey&units=metric&cnt=7'),
-    );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      List<ForecastDay> forecast = [];
-      for (var item in data['list']) {
-        forecast.add(ForecastDay.fromJson(item));
-      }
-      return forecast;
-    } else {
-      throw Exception('Failed to load forecast data');
+// Assuming the JSON structure from OpenWeatherMap's forecast API
+
+  Future<List<ForecastDay>> getSevenDayForecast(double lat, double lon) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/forecast?lat=$lat&lon=$lon&appid=$apiKey&units=metric&cnt=7'),
+  );
+
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    List<ForecastDay> forecast = [];
+    for (var item in data['list']) {
+      forecast.add(ForecastDay.fromJson(item));
     }
+    return forecast;
+  } else {
+    throw Exception('Failed to load forecast data');
   }
+}
+
 
   Future<WeatherData> getWeatherByLocation(double lat, double lon) async {
     final response = await http.get(
