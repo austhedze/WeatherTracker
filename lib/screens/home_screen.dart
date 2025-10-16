@@ -1,12 +1,8 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:xam_ap/models/weather_models.dart';
-import 'package:xam_ap/services/location_services.dart';
 import 'package:xam_ap/services/weather_servivces.dart';
 import 'package:xam_ap/widgets/forcast_list.dart';
 import 'package:xam_ap/widgets/weather_card.dart';
@@ -23,7 +19,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   final WeatherService _weatherService = WeatherService();
-  final LocationService _locationService = LocationService();
   final FirebaseService _firebaseService = FirebaseService();
   final TextEditingController _searchController = TextEditingController();
 
@@ -54,50 +49,27 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
-  // for seven-day forecast
-  Future<List<ForecastDay>> get7DayForecast(double lat, double lon) async {
-    final url = Uri.parse(
-      'https://api.openweathermap.org/data/2.5/forecast?lat=$lat&lon=$lon&units=metric&appid=YOUR_API_KEY',
-    );
-
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      List<ForecastDay> forecastList = [];
-
-      for (var i = 0; i < data['list'].length; i += 8) {
-        // every 8th = ~1 day
-        var day = data['list'][i];
-        forecastList.add(
-          ForecastDay(
-            date: DateTime.parse(day['dt_txt']),
-            minTemp: day['main']['temp_min'].toDouble(),
-            maxTemp: day['main']['temp_max'].toDouble(),
-            description: day['weather'][0]['description'],
-            icon: day['weather'][0]['icon'],
-            conditionId: day['weather'][0]['id'],
-          ),
-        );
-      }
-
-      return forecastList;
-    } else {
-      throw Exception('Failed to load forecast');
-    }
-  }
-
   Future<void> _getCurrentLocationWeather() async {
-    debugPrint(" Starting location fetch...");
+    debugPrint("📍 Starting location fetch...");
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      debugPrint(" Service enabled: $serviceEnabled");
+      debugPrint("📡 Service enabled: $serviceEnabled");
 
       if (!serviceEnabled) {
-        debugPrint(" Location service disabled");
+        debugPrint("❌ Location service disabled");
+        setState(() {
+          _errorMessage = 'Location services are disabled. Please enable them.';
+          _isLoading = false;
+        });
         await Geolocator.openLocationSettings();
         return;
       }
@@ -111,17 +83,47 @@ class _HomeScreenState extends State<HomeScreen>
       }
 
       if (permission == LocationPermission.deniedForever) {
-        debugPrint(" Permission denied forever");
+        debugPrint("🚫 Permission denied forever");
+        setState(() {
+          _errorMessage =
+              'Location permission denied. Please enable in settings.';
+          _isLoading = false;
+        });
         await Geolocator.openAppSettings();
+        return;
+      }
+
+      if (permission == LocationPermission.denied) {
+        setState(() {
+          _errorMessage = 'Location permission denied.';
+          _isLoading = false;
+        });
         return;
       }
 
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      debugPrint(" Got location: ${position.latitude}, ${position.longitude}");
+      debugPrint("✅ Got location: ${position.latitude}, ${position.longitude}");
+
+      // Fetch weather for current location
+      final weather = await _weatherService.getWeatherByCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      setState(() {
+        _currentWeather = weather;
+        _isLoading = false;
+      });
+
+      await _getForecast();
     } catch (e) {
-      debugPrint(" Error: $e");
+      debugPrint("❌ Error: $e");
+      setState(() {
+        _errorMessage = 'Failed to get location: ${e.toString()}';
+        _isLoading = false;
+      });
     }
   }
 
@@ -138,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen>
       setState(() {
         _currentWeather = weather;
       });
-      _getForecast();
+      await _getForecast();
     } catch (e) {
       setState(() {
         _errorMessage = 'City not found. Please try again.';
@@ -154,13 +156,8 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _getForecast() async {
     if (_currentWeather == null) return;
 
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
-      // Use actual coordinates from the current weather data
-      final forecast = await _weatherService.getSevenDayForecast(
+      final forecast = await _weatherService.getFiveDayForecast(
         _currentWeather!.latitude,
         _currentWeather!.longitude,
       );
@@ -170,10 +167,6 @@ class _HomeScreenState extends State<HomeScreen>
       });
     } catch (e) {
       debugPrint("❌ Failed to fetch forecast: $e");
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 
@@ -256,9 +249,6 @@ class _HomeScreenState extends State<HomeScreen>
               pinned: true,
               flexibleSpace: LayoutBuilder(
                 builder: (context, constraints) {
-                  final opacity =
-                      (constraints.maxHeight - kToolbarHeight) /
-                      (140 - kToolbarHeight);
                   return Stack(
                     children: [
                       // Background with gradient overlay
@@ -361,7 +351,7 @@ class _HomeScreenState extends State<HomeScreen>
                         WeatherCard(weather: _currentWeather!),
                         const SizedBox(height: 24),
 
-                        // 7-Day Forecast
+                        // 5-Day Forecast
                         if (_forecast.isNotEmpty)
                           ForecastList(forecast: _forecast),
                       ] else if (!_isLoading && _errorMessage.isEmpty) ...[

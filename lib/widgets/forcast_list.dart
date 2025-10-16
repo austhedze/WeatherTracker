@@ -13,7 +13,7 @@ class ForecastList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '7-Day Forecast',
+          '5-Day Forecast',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
